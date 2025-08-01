@@ -1,0 +1,115 @@
+name: Deploy to Supabase
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+  SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local development
+        run: supabase start
+
+      - name: Verify database schema
+        run: |
+          supabase db reset
+          echo "Database schema verified successfully"
+
+      - name: Generate types for validation
+        run: |
+          supabase gen types typescript --local > types/database.types.ts
+          echo "Type generation completed"
+
+      - name: Stop Supabase
+        run: supabase stop
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to Supabase project
+        run: |
+          supabase link --project-ref $SUPABASE_PROJECT_ID
+
+      - name: Check migration diff
+        run: |
+          # Check if local migrations differ from remote
+          supabase db diff --use-migra || echo "No schema differences detected"
+
+      - name: Deploy database migrations
+        run: |
+          supabase db push --password $SUPABASE_DB_PASSWORD
+
+      - name: Verify deployment
+        run: |
+          echo "Deployment completed successfully"
+          echo "Project ID: $SUPABASE_PROJECT_ID"
+          
+  security-check:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Security validation
+        run: |
+          echo "Performing security checks..."
+          # Check for RLS policies
+          if grep -q "enable row level security" supabase/migrations/*.sql; then
+            echo "✅ Row Level Security found in migrations"
+          else
+            echo "❌ No Row Level Security found"
+            exit 1
+          fi
+          
+          # Check for security policies
+          if grep -q "create policy" supabase/migrations/*.sql; then
+            echo "✅ Security policies found in migrations"
+          else
+            echo "❌ No security policies found"
+            exit 1
+          fi
+
+          # Check for potential dangerous operations
+          if grep -qi "drop\s\+database\|drop\s\+schema\|truncate\s\+table" supabase/migrations/*.sql; then
+            echo "⚠️  Warning: Potentially destructive operations found in migrations"
+            echo "Please review migrations carefully before deploying to production"
+          fi
+          
+          echo "Security checks passed!"

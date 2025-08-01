@@ -1,0 +1,509 @@
+{
+  "info": {
+    "name": "{AppName} - API Collection",
+    "_postman_id": "{app-name}-api-collection-v1",
+    "description": "Complete API test suite for {AppName} with user authentication and profiles",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "variable": [
+    {
+      "key": "SUPABASE_URL",
+      "value": "http://localhost:54321",
+      "description": "Supabase URL (localhost for development, production URL for deployed)"
+    },
+    {
+      "key": "SUPABASE_ANON_KEY",
+      "value": "your-local-anon-key",
+      "description": "Supabase anonymous key (get from supabase status after supabase start)"
+    },
+    {
+      "key": "SUPABASE_SERVICE_KEY",
+      "value": "your-local-service-role-key",
+      "description": "Supabase service role key (get from supabase status after supabase start)"
+    },
+    {
+      "key": "USER_JWT_TOKEN",
+      "value": "",
+      "description": "JWT token for authenticated user (obtained from auth login response)"
+    },
+    {
+      "key": "USER_ID",
+      "value": "",
+      "description": "Authenticated user's UUID (obtained from auth login response)"
+    },
+    {
+      "key": "OTHER_USER_ID",
+      "value": "",
+      "description": "Another user's UUID for security testing"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{USER_JWT_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication Tests",
+      "item": [
+        {
+          "name": "Register New User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"securePassword123!\",\n  \"data\": {\n    \"username\": \"testuser\",\n    \"full_name\": \"Test User\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/auth/v1/signup",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["auth", "v1", "signup"]
+            },
+            "description": "Register a new user and automatically create profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"securePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/auth/v1/token?grant_type=password",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["auth", "v1", "token"],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Login user and get JWT token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile Management",
+      "item": [
+        {
+          "name": "Get Own Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_JWT_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{USER_ID}}",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "eq.{{USER_ID}}"
+                }
+              ]
+            },
+            "description": "Get authenticated user's own profile (should succeed)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Own Profile via REST API",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_JWT_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Updated Name\",\n  \"avatar_url\": \"https://example.com/new-avatar.png\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{USER_ID}}",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "eq.{{USER_ID}}"
+                }
+              ]
+            },
+            "description": "Update authenticated user's own profile via REST API"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Own Profile via RPC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_JWT_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"p_username\": \"updated_username\",\n  \"p_full_name\": \"Updated via RPC\",\n  \"p_avatar_url\": \"https://example.com/rpc-avatar.png\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/rpc/update_user_profile",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "rpc", "update_user_profile"]
+            },
+            "description": "Update profile using the secure RPC function"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Security Tests",
+      "item": [
+        {
+          "name": "Try to Access Another User's Profile (Should Fail)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_JWT_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{OTHER_USER_ID}}",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "eq.{{OTHER_USER_ID}}"
+                }
+              ]
+            },
+            "description": "Attempt to access another user's profile (should return empty or 403)"
+          },
+          "response": []
+        },
+        {
+          "name": "Try to Update Another User's Profile (Should Fail)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_JWT_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Hacker Name\",\n  \"username\": \"hacked\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{OTHER_USER_ID}}",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "eq.{{OTHER_USER_ID}}"
+                }
+              ]
+            },
+            "description": "Attempt to update another user's profile (should fail)"
+          },
+          "response": []
+        },
+        {
+          "name": "Try Direct Insert (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_JWT_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{OTHER_USER_ID}}\",\n  \"username\": \"fake_user\",\n  \"full_name\": \"Fake User\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"]
+            },
+            "description": "Try to insert a profile directly (should fail due to RLS)"
+          },
+          "response": []
+        },
+        {
+          "name": "Access Without Authentication (Should Fail)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"]
+            },
+            "description": "Try to access profiles without authentication (should return empty)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validation Tests",
+      "item": [
+        {
+          "name": "Invalid Username (Too Short)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_JWT_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ab\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{USER_ID}}",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "eq.{{USER_ID}}"
+                }
+              ]
+            },
+            "description": "Try to set username too short (should fail constraint)"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Avatar URL",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_ANON_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_JWT_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"avatar_url\": \"not-a-valid-url\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{USER_ID}}",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "eq.{{USER_ID}}"
+                }
+              ]
+            },
+            "description": "Try to set invalid avatar URL (should fail constraint)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Operations",
+      "item": [
+        {
+          "name": "Admin: Get All Profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{SUPABASE_SERVICE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_KEY}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"]
+            },
+            "description": "Admin operation to get all profiles (service role bypasses RLS)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// You can add pre-request scripts here for automation",
+          "// For example, automatically refresh JWT tokens"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Add common test scripts here",
+          "pm.test(\"Response time is less than 2000ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "pm.test(\"Status code is not 500\", function () {",
+          "    pm.expect(pm.response.code).to.not.equal(500);",
+          "});"
+        ]
+      }
+    }
+  ]
+}

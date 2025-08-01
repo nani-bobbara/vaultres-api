@@ -1,0 +1,32 @@
+{
+  "name": "my-supabase-app",
+  "version": "1.0.0",
+  "description": "{AppName} - Clean, production-ready Supabase starter template",
+  "scripts": {
+    "dev": "supabase start",
+    "build": "supabase db push",
+    "reset": "supabase db reset",
+    "types": "supabase gen types typescript --local > types/database.types.ts",
+    "diff": "supabase db diff",
+    "stop": "supabase stop",
+    "status": "supabase status"
+  },
+  "keywords": [
+    "supabase",
+    "template",
+    "authentication",
+    "postgresql",
+    "rls",
+    "security",
+    "api",
+    "starter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/{YOUR_USERNAME}/{YOUR_PROJECT_NAME}.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "supabase": "latest"
+  }
+}
