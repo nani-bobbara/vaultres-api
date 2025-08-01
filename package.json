@@ -8,6 +8,10 @@
     "reset": "supabase db reset",
     "types": "supabase gen types typescript --local > types/database.types.ts",
     "diff": "supabase db diff",
+    "functions:serve": "supabase functions serve",
+    "functions:deploy": "supabase functions deploy",
+    "functions:deploy:hello": "supabase functions deploy hello-world",
+    "functions:deploy:avatar": "supabase functions deploy user-avatar",
     "stop": "supabase stop",
     "status": "supabase status"
   },

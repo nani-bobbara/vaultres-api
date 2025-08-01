@@ -1,11 +1,11 @@
 {
   "info": {
-    "name": "{AppName} - API Collection",
-    "_postman_id": "{app-name}-api-collection-v1",
-    "description": "Complete API test suite for {AppName} with user authentication and profiles",
+    "name": "{AppName} - Complete API Collection",
+    "_postman_id": "{app-name}-api-collection-v2",
+    "description": "Comprehensive API test suite for {AppName} with authentication, profiles, storage, realtime, and edge functions",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": {
-      "major": 1,
+      "major": 2,
       "minor": 0,
       "patch": 0
     }
@@ -22,11 +22,6 @@
       "description": "Supabase anonymous key (get from supabase status after supabase start)"
     },
     {
-      "key": "SUPABASE_SERVICE_KEY",
-      "value": "your-local-service-role-key",
-      "description": "Supabase service role key (get from supabase status after supabase start)"
-    },
-    {
       "key": "USER_JWT_TOKEN",
       "value": "",
       "description": "JWT token for authenticated user (obtained from auth login response)"
@@ -35,11 +30,6 @@
       "key": "USER_ID",
       "value": "",
       "description": "Authenticated user's UUID (obtained from auth login response)"
-    },
-    {
-      "key": "OTHER_USER_ID",
-      "value": "",
-      "description": "Another user's UUID for security testing"
     }
   ],
   "auth": {
@@ -54,456 +44,489 @@
   },
   "item": [
     {
-      "name": "Authentication Tests",
+      "name": "🔐 Authentication",
       "item": [
         {
-          "name": "Register New User",
+          "name": "Sign Up",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Content-Type", "value": "application/json"}
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"securePassword123!\",\n  \"data\": {\n    \"username\": \"testuser\",\n    \"full_name\": \"Test User\"\n  }\n}"
+              "raw": "{\"email\": \"test@example.com\", \"password\": \"password123\"}"
             },
             "url": {
               "raw": "{{SUPABASE_URL}}/auth/v1/signup",
               "host": ["{{SUPABASE_URL}}"],
               "path": ["auth", "v1", "signup"]
-            },
-            "description": "Register a new user and automatically create profile"
-          },
-          "response": []
+            }
+          }
         },
         {
-          "name": "Login User",
+          "name": "Sign In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('USER_JWT_TOKEN', response.access_token);",
+                  "    pm.collectionVariables.set('USER_ID', response.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Content-Type", "value": "application/json"}
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"securePassword123!\"\n}"
+              "raw": "{\"email\": \"test@example.com\", \"password\": \"password123\"}"
             },
             "url": {
               "raw": "{{SUPABASE_URL}}/auth/v1/token?grant_type=password",
               "host": ["{{SUPABASE_URL}}"],
               "path": ["auth", "v1", "token"],
-              "query": [
-                {
-                  "key": "grant_type",
-                  "value": "password"
-                }
-              ]
-            },
-            "description": "Login user and get JWT token"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Profile Management",
-      "item": [
+              "query": [{"key": "grant_type", "value": "password"}]
+            }
+          }
+        },
         {
-          "name": "Get Own Profile",
+          "name": "Get Current User",
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{USER_JWT_TOKEN}}",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
             ],
             "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{USER_ID}}",
+              "raw": "{{SUPABASE_URL}}/auth/v1/user",
               "host": ["{{SUPABASE_URL}}"],
-              "path": ["rest", "v1", "user_profiles"],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "eq.{{USER_ID}}"
-                }
-              ]
-            },
-            "description": "Get authenticated user's own profile (should succeed)"
-          },
-          "response": []
+              "path": ["auth", "v1", "user"]
+            }
+          }
         },
         {
-          "name": "Update Own Profile via REST API",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{USER_JWT_TOKEN}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Updated Name\",\n  \"avatar_url\": \"https://example.com/new-avatar.png\"\n}"
-            },
-            "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{USER_ID}}",
-              "host": ["{{SUPABASE_URL}}"],
-              "path": ["rest", "v1", "user_profiles"],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "eq.{{USER_ID}}"
-                }
-              ]
-            },
-            "description": "Update authenticated user's own profile via REST API"
-          },
-          "response": []
-        },
-        {
-          "name": "Update Own Profile via RPC",
+          "name": "Sign Out",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{USER_JWT_TOKEN}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"p_username\": \"updated_username\",\n  \"p_full_name\": \"Updated via RPC\",\n  \"p_avatar_url\": \"https://example.com/rpc-avatar.png\"\n}"
-            },
             "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/rpc/update_user_profile",
+              "raw": "{{SUPABASE_URL}}/auth/v1/logout",
               "host": ["{{SUPABASE_URL}}"],
-              "path": ["rest", "v1", "rpc", "update_user_profile"]
-            },
-            "description": "Update profile using the secure RPC function"
-          },
-          "response": []
+              "path": ["auth", "v1", "logout"]
+            }
+          }
         }
       ]
     },
     {
-      "name": "Security Tests",
+      "name": "👤 User Profiles",
       "item": [
         {
-          "name": "Try to Access Another User's Profile (Should Fail)",
+          "name": "Get My Profile",
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{USER_JWT_TOKEN}}",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
             ],
             "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{OTHER_USER_ID}}",
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?user_id=eq.{{USER_ID}}&select=*",
               "host": ["{{SUPABASE_URL}}"],
               "path": ["rest", "v1", "user_profiles"],
               "query": [
-                {
-                  "key": "id",
-                  "value": "eq.{{OTHER_USER_ID}}"
-                }
+                {"key": "user_id", "value": "eq.{{USER_ID}}"},
+                {"key": "select", "value": "*"}
               ]
-            },
-            "description": "Attempt to access another user's profile (should return empty or 403)"
-          },
-          "response": []
+            }
+          }
         },
         {
-          "name": "Try to Update Another User's Profile (Should Fail)",
+          "name": "Update My Profile",
           "request": {
             "method": "PATCH",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{USER_JWT_TOKEN}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"},
+              {"key": "Content-Type", "value": "application/json"}
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Hacker Name\",\n  \"username\": \"hacked\"\n}"
+              "raw": "{\"full_name\": \"Updated Name\", \"avatar_url\": \"https://example.com/avatar.jpg\"}"
             },
             "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{OTHER_USER_ID}}",
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?user_id=eq.{{USER_ID}}",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"],
+              "query": [{"key": "user_id", "value": "eq.{{USER_ID}}"}]
+            }
+          }
+        },
+        {
+          "name": "Get All Profiles (Public Data)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?select=id,full_name,avatar_url,created_at",
               "host": ["{{SUPABASE_URL}}"],
               "path": ["rest", "v1", "user_profiles"],
               "query": [
-                {
-                  "key": "id",
-                  "value": "eq.{{OTHER_USER_ID}}"
-                }
+                {"key": "select", "value": "id,full_name,avatar_url,created_at"}
               ]
-            },
-            "description": "Attempt to update another user's profile (should fail)"
-          },
-          "response": []
-        },
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Posts (Realtime)",
+      "item": [
         {
-          "name": "Try Direct Insert (Should Fail)",
+          "name": "Create Post",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{USER_JWT_TOKEN}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"},
+              {"key": "Content-Type", "value": "application/json"}
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"{{OTHER_USER_ID}}\",\n  \"username\": \"fake_user\",\n  \"full_name\": \"Fake User\"\n}"
+              "raw": "{\"title\": \"My First Post\", \"content\": \"This is the content of my first post.\"}"
             },
             "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles",
+              "raw": "{{SUPABASE_URL}}/rest/v1/posts",
               "host": ["{{SUPABASE_URL}}"],
-              "path": ["rest", "v1", "user_profiles"]
-            },
-            "description": "Try to insert a profile directly (should fail due to RLS)"
-          },
-          "response": []
+              "path": ["rest", "v1", "posts"]
+            }
+          }
         },
         {
-          "name": "Access Without Authentication (Should Fail)",
+          "name": "Get All Posts",
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
             ],
             "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles",
+              "raw": "{{SUPABASE_URL}}/rest/v1/posts?select=*,user_profiles(full_name)&order=created_at.desc",
               "host": ["{{SUPABASE_URL}}"],
-              "path": ["rest", "v1", "user_profiles"]
-            },
-            "description": "Try to access profiles without authentication (should return empty)"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Validation Tests",
-      "item": [
-        {
-          "name": "Invalid Username (Too Short)",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{USER_JWT_TOKEN}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"ab\"\n}"
-            },
-            "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{USER_ID}}",
-              "host": ["{{SUPABASE_URL}}"],
-              "path": ["rest", "v1", "user_profiles"],
+              "path": ["rest", "v1", "posts"],
               "query": [
-                {
-                  "key": "id",
-                  "value": "eq.{{USER_ID}}"
-                }
+                {"key": "select", "value": "*,user_profiles(full_name)"},
+                {"key": "order", "value": "created_at.desc"}
               ]
-            },
-            "description": "Try to set username too short (should fail constraint)"
-          },
-          "response": []
+            }
+          }
         },
         {
-          "name": "Invalid Avatar URL",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_ANON_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{USER_JWT_TOKEN}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"avatar_url\": \"not-a-valid-url\"\n}"
-            },
-            "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?id=eq.{{USER_ID}}",
-              "host": ["{{SUPABASE_URL}}"],
-              "path": ["rest", "v1", "user_profiles"],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "eq.{{USER_ID}}"
-                }
-              ]
-            },
-            "description": "Try to set invalid avatar URL (should fail constraint)"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Admin Operations",
-      "item": [
-        {
-          "name": "Admin: Get All Profiles",
+          "name": "Get My Posts",
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "apikey",
-                "value": "{{SUPABASE_SERVICE_KEY}}",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{SUPABASE_SERVICE_KEY}}",
-                "type": "text"
-              }
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
             ],
             "url": {
-              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles",
+              "raw": "{{SUPABASE_URL}}/rest/v1/posts?user_id=eq.{{USER_ID}}&select=*&order=created_at.desc",
               "host": ["{{SUPABASE_URL}}"],
-              "path": ["rest", "v1", "user_profiles"]
+              "path": ["rest", "v1", "posts"],
+              "query": [
+                {"key": "user_id", "value": "eq.{{USER_ID}}"},
+                {"key": "select", "value": "*"},
+                {"key": "order", "value": "created_at.desc"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update My Post",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Updated Post Title\", \"content\": \"Updated content here.\"}"
             },
-            "description": "Admin operation to get all profiles (service role bypasses RLS)"
-          },
-          "response": []
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/posts?user_id=eq.{{USER_ID}}&id=eq.POST_ID_HERE",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "posts"],
+              "query": [
+                {"key": "user_id", "value": "eq.{{USER_ID}}"},
+                {"key": "id", "value": "eq.POST_ID_HERE"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete My Post",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/posts?user_id=eq.{{USER_ID}}&id=eq.POST_ID_HERE",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "posts"],
+              "query": [
+                {"key": "user_id", "value": "eq.{{USER_ID}}"},
+                {"key": "id", "value": "eq.POST_ID_HERE"}
+              ]
+            }
+          }
         }
       ]
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// You can add pre-request scripts here for automation",
-          "// For example, automatically refresh JWT tokens"
-        ]
-      }
     },
     {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Add common test scripts here",
-          "pm.test(\"Response time is less than 2000ms\", function () {",
-          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
-          "});",
-          "",
-          "pm.test(\"Status code is not 500\", function () {",
-          "    pm.expect(pm.response.code).to.not.equal(500);",
-          "});"
-        ]
-      }
+      "name": "📁 Storage",
+      "item": [
+        {
+          "name": "List Avatars Bucket",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/storage/v1/object/list/avatars",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["storage", "v1", "object", "list", "avatars"]
+            }
+          }
+        },
+        {
+          "name": "Upload Avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Upload an image file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/storage/v1/object/avatars/{{USER_ID}}.jpg",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["storage", "v1", "object", "avatars", "{{USER_ID}}.jpg"]
+            }
+          }
+        },
+        {
+          "name": "Get Avatar Public URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"}
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/storage/v1/object/public/avatars/{{USER_ID}}.jpg",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["storage", "v1", "object", "public", "avatars", "{{USER_ID}}.jpg"]
+            }
+          }
+        },
+        {
+          "name": "List My Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/storage/v1/object/list/documents/{{USER_ID}}",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["storage", "v1", "object", "list", "documents", "{{USER_ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Upload a document file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/storage/v1/object/documents/{{USER_ID}}/document.pdf",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["storage", "v1", "object", "documents", "{{USER_ID}}", "document.pdf"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚡ Edge Functions",
+      "item": [
+        {
+          "name": "Hello World Function",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Postman User\"}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/hello-world",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "hello-world"]
+            }
+          }
+        },
+        {
+          "name": "Upload Avatar via Function",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "avatar", "type": "file", "src": "", "description": "Upload an avatar image"}
+              ]
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/user-avatar",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "user-avatar"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Avatar via Function",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"}
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/user-avatar",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "user-avatar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔒 Security Tests",
+      "item": [
+        {
+          "name": "❌ Unauthenticated Profile Access",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Should deny unauthenticated access', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 401]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"}
+            ],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/user_profiles?select=*",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "user_profiles"],
+              "query": [{"key": "select", "value": "*"}]
+            }
+          }
+        },
+        {
+          "name": "❌ Try to Update Other User's Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Should not update other user post', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 401]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "apikey", "value": "{{SUPABASE_ANON_KEY}}"},
+              {"key": "Authorization", "value": "Bearer {{USER_JWT_TOKEN}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Hacked Title\"}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/rest/v1/posts?user_id=eq.OTHER_USER_ID",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["rest", "v1", "posts"],
+              "query": [{"key": "user_id", "value": "eq.OTHER_USER_ID"}]
+            }
+          }
+        }
+      ]
     }
   ]
 }

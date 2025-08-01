@@ -8,11 +8,35 @@
 
 - 🔐 **Secure Authentication**: Complete auth flow with Supabase Auth
 - 👤 **User Profiles**: Auto-created profiles with RLS security
-- 🛡️ **Production Security**: Row Level Security, input validation, constraints
+- � **File Storage**: Secure avatar and document storage with policies
+- ⚡ **Edge Functions**: Serverless functions for custom business logic
+- 🔄 **Realtime**: Live data sync with websocket connections
+- 📝 **Posts System**: Example content system with realtime updates
+- �🛡️ **Production Security**: Row Level Security, input validation, constraints
 - 🔄 **CI/CD Pipeline**: Automated testing and deployment with GitHub Actions
 - 🧪 **API Testing**: Complete Postman collection with security tests
 - 📚 **TypeScript Ready**: Auto-generated database types
 - 🏗️ **Best Practices**: Domain-driven, event-driven, test-driven design
+
+## 📦 Core Components
+
+### Database Schema
+- **user_profiles** - User profile data with RLS
+- **posts** - Example content with realtime capabilities
+- **Storage buckets** - Avatars (public) and documents (private)
+
+### Edge Functions
+- **hello-world** - Basic serverless function example
+- **user-avatar** - Avatar upload with automatic profile updates
+
+### API Testing
+- **Postman Collection** - Complete test suite for all endpoints including:
+  - Authentication flows
+  - User profile management
+  - Posts with realtime capabilities
+  - File storage operations
+  - Edge function calls
+  - Security boundary testing
 
 ## ⚡ Quick Start
 
@@ -143,12 +167,17 @@ Import `Supabase-API-Collection.json` into Postman. Tests include:
 ## 🔧 Available Scripts
 
 ```bash
-npm run dev      # Start local Supabase
-npm run build    # Deploy to production
-npm run reset    # Reset local database
-npm run types    # Generate TypeScript types
-npm run status   # Check Supabase status
-npm run stop     # Stop local Supabase
+npm run dev                  # Start local Supabase
+npm run build               # Deploy to production  
+npm run reset               # Reset local database
+npm run types               # Generate TypeScript types
+npm run diff                # Check migration differences
+npm run functions:serve     # Serve Edge Functions locally
+npm run functions:deploy    # Deploy all Edge Functions
+npm run functions:deploy:hello   # Deploy hello-world function
+npm run functions:deploy:avatar  # Deploy user-avatar function
+npm run status              # Check Supabase status
+npm run stop                # Stop local Supabase
 ```
 
 ## 🏗️ Project Structure
@@ -158,7 +187,10 @@ npm run stop     # Stop local Supabase
 ├── supabase/               # Supabase configuration
 │   ├── config.toml        # Local development settings
 │   ├── seed.sql           # Sample data
-│   └── migrations/        # Database schema & migrations
+│   ├── migrations/        # Database schema & migrations
+│   └── functions/         # Edge Functions
+│       ├── hello-world/   # Basic serverless function
+│       └── user-avatar/   # Avatar upload function
 ├── types/                 # TypeScript database types (auto-generated)
 ├── docs/                  # Documentation
 └── package.json          # NPM scripts & dependencies
